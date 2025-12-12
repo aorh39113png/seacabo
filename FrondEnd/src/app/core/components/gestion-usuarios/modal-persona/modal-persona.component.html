@@ -1,0 +1,216 @@
+<div
+  class="fixed inset-0 bg-blue-950/60 backdrop-blur-sm flex items-center justify-center z-50 font-[Times_New_Roman]"
+>
+  <div
+    class="bg-blue-50 rounded-3xl shadow-xl w-full max-w-4xl p-8 border border-green-900/30 relative max-h-[90vh] overflow-y-auto mx-4"
+  >
+    <!-- TÍTULO -->
+    <h2
+      class="text-3xl font-extrabold text-blue-900 mb-8 text-center tracking-tight"
+    >
+      {{
+        modoEdicion
+          ? "Modificar Datos de la Persona"
+          : "Adicionar Nueva Persona"
+      }}
+    </h2>
+
+    <!-- FORMULARIO -->
+    <form class="grid grid-cols-1 md:grid-cols-2 gap-5 text-slate-800">
+      <!-- Cédula -->
+      <input
+        [(ngModel)]="persona.cedula"
+        name="cedula"
+        required
+        autocomplete="off"
+        placeholder="Cédula"
+        class="col-span-2 px-4 py-3 border border-green-900/40 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-green-700 focus:border-green-700 placeholder-slate-500"
+      />
+
+      <!-- Nombre -->
+      <input
+        [(ngModel)]="persona.nombre"
+        name="nombre"
+        placeholder="Nombre"
+        class="px-4 py-3 border border-green-900/40 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-green-700 focus:border-green-700 placeholder-slate-500"
+      />
+
+      <!-- Apellidos -->
+      <input
+        [(ngModel)]="persona.ap"
+        name="ap"
+        placeholder="Apellido Paterno"
+        class="px-4 py-3 border border-green-900/40 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-green-700 focus:border-green-700 placeholder-slate-500"
+      />
+
+      <input
+        [(ngModel)]="persona.am"
+        name="am"
+        placeholder="Apellido Materno"
+        class="px-4 py-3 border border-green-900/40 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-green-700 focus:border-green-700 placeholder-slate-500"
+      />
+
+      <!-- TELÉFONOS -->
+      <div class="col-span-2">
+        <label class="text-sm font-semibold block mb-1 text-blue-900"
+          >Teléfonos:</label
+        >
+
+        <div class="flex items-center gap-3">
+          <input
+            [(ngModel)]="telefonoNuevo"
+            name="telefonoNuevo"
+            placeholder="Ingresa un número"
+            class="flex-1 px-4 py-2.5 border border-green-900/40 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-green-700 placeholder-slate-500 text-sm"
+          />
+
+          <button
+            type="button"
+            (click)="agregarTelefono()"
+            class="px-3 py-2 rounded-full bg-green-900 text-white hover:bg-green-800 transition shadow-sm"
+          >
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+
+        <div class="mt-3 flex flex-wrap gap-2" *ngIf="telefonos.length > 0">
+          <span
+            *ngFor="let telefono of telefonos; let i = index"
+            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 text-slate-800 border border-green-900/30 text-sm"
+          >
+            {{ telefono }}
+            <button
+              type="button"
+              class="text-slate-700 hover:text-red-600"
+              (click)="eliminarTelefono(i)"
+            >
+              <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+          </span>
+        </div>
+      </div>
+
+      <!-- GÉNERO -->
+      <div class="col-span-2 flex items-center gap-6 mt-1">
+        <p class="text-sm font-semibold text-blue-900">Género:</p>
+
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            [(ngModel)]="persona.genero"
+            name="genero"
+            value="M"
+            class="accent-green-900"
+          />
+          Masculino
+        </label>
+
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            [(ngModel)]="persona.genero"
+            name="genero"
+            value="F"
+            class="accent-green-900"
+          />
+          Femenino
+        </label>
+      </div>
+
+      <!-- Fecha nacimiento -->
+      <div class="col-span-2">
+        <label class="text-sm font-semibold text-blue-900"
+          >Fecha de Nacimiento:</label
+        >
+        <input
+          type="date"
+          [(ngModel)]="persona.fnac"
+          name="fnac"
+          class="w-full mt-1 px-4 py-2.5 border border-green-900/40 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-green-700"
+        />
+      </div>
+
+      <!-- Estado civil -->
+      <div class="col-span-2 flex items-center gap-6 mt-1">
+        <p class="text-sm font-semibold text-blue-900">Estado Civil:</p>
+
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            [(ngModel)]="persona.ecivil"
+            name="ecivil"
+            value="S"
+            class="accent-green-900"
+          />
+          Soltero
+        </label>
+
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            [(ngModel)]="persona.ecivil"
+            name="ecivil"
+            value="C"
+            class="accent-green-900"
+          />
+          Casado
+        </label>
+
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            [(ngModel)]="persona.ecivil"
+            name="ecivil"
+            value="D"
+            class="accent-green-900"
+          />
+          Divorciado
+        </label>
+      </div>
+
+      <!-- Tipo personal -->
+      <div class="col-span-2">
+        <label class="text-sm font-semibold text-blue-900"
+          >Tipo Personal:</label
+        >
+        <select
+          [(ngModel)]="persona.tipo"
+          name="tipo"
+          class="w-full mt-1 px-4 py-2.5 border border-green-900/40 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-green-700 text-slate-900"
+        >
+          <option value="">Seleccione...</option>
+          <option value="P">Profesor</option>
+          <option value="E">Estudiante</option>
+          <option value="A">Administrativo</option>
+        </select>
+      </div>
+
+      <!-- FOTO -->
+      <div class="col-span-2 flex flex-col">
+        <label class="text-sm font-semibold text-blue-900">Foto:</label>
+        <input
+          type="file"
+          (change)="onFileSelected($event)"
+          class="mt-2 text-sm file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:bg-green-900 file:text-white hover:file:bg-green-800 transition"
+        />
+      </div>
+    </form>
+
+    <!-- BOTONES -->
+    <div class="flex justify-end gap-4 mt-10">
+      <button
+        (click)="onGuardar()"
+        class="bg-green-900 hover:bg-green-800 text-white px-6 py-3 rounded-full font-semibold tracking-wide transition shadow-md"
+      >
+        {{ modoEdicion ? "Modificar" : "Guardar" }}
+      </button>
+
+      <button
+        (click)="cerrar.emit()"
+        class="bg-white border border-green-900 text-green-900 px-6 py-3 rounded-full font-semibold tracking-wide hover:bg-blue-100 transition shadow-sm"
+      >
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>

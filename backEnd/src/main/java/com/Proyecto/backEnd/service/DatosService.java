@@ -1,0 +1,45 @@
+package com.Proyecto.backEnd.service;
+
+import com.Proyecto.backEnd.exception.DuplicateResourceException;
+import com.Proyecto.backEnd.model.DatosModel;
+import com.Proyecto.backEnd.model.PersonalModel;
+import com.Proyecto.backEnd.repository.DatosRepo;
+import com.Proyecto.backEnd.repository.PersonalRepo;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+
+@Service
+public class DatosService {
+
+    @Autowired
+    private DatosRepo datosRepo;
+
+    @Autowired
+    private PersonalRepo personalRepo;
+
+    public DatosModel registrarDato(String cedula, int codp) {
+        PersonalModel persona = personalRepo.findById(codp)
+                .orElseThrow(() -> new RuntimeException("Persona no encontrada con codp: " + codp));
+        String cedulaNormalizada = cedula == null ? null : cedula.trim();
+
+        if (cedulaNormalizada == null || cedulaNormalizada.isEmpty()) {
+            throw new IllegalArgumentException("La cédula es obligatoria");
+        }
+
+        if (datosRepo.existsByCedula(cedulaNormalizada)) {
+            throw new DuplicateResourceException("Ya existe una persona registrada con esa cédula");
+        }
+
+        DatosModel d = new DatosModel();
+        d.setCodp(codp);
+        d.setCedula(cedulaNormalizada);
+        d.setPersonal(persona);
+        try {
+            return datosRepo.save(d);
+        } catch (DataIntegrityViolationException ex) {
+            throw new DuplicateResourceException("Ya existe una persona registrada con esa cédula", ex);
+        }
+    }
+}

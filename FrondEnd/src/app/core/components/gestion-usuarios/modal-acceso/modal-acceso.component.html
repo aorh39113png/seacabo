@@ -1,0 +1,64 @@
+<div
+  class="fixed inset-0 bg-blue-950/60 backdrop-blur-sm flex items-center justify-center z-50 font-[Times_New_Roman]"
+>
+  <div
+    class="bg-blue-50 rounded-3xl shadow-xl w-full max-w-md p-8 border border-green-900/30"
+  >
+    <!-- Título -->
+    <h2
+      class="text-2xl md:text-3xl font-extrabold text-blue-900 mb-6 pb-3 tracking-tight text-center border-b border-green-900/30"
+    >
+      {{
+        modoEdicion ? "Modificar Datos de Acceso" : "Asignar Datos de Acceso"
+      }}
+    </h2>
+
+    <!-- Nombre de la persona -->
+    <div class="text-center text-slate-700 font-semibold mb-6">
+      {{ personaNombreCompleto }}
+    </div>
+
+    <!-- Formulario -->
+    <form class="space-y-4">
+      <input
+        [(ngModel)]="usuario.login"
+        name="login"
+        placeholder="Nombre de Usuario"
+        class="w-full px-4 py-2 border border-green-900/40 rounded-xl shadow-sm bg-white placeholder-slate-500 focus:ring-2 focus:ring-green-700 focus:border-green-700 outline-none"
+      />
+
+      <input
+        [(ngModel)]="usuario.password"
+        name="password"
+        type="password"
+        placeholder="Password"
+        class="w-full px-4 py-2 border border-green-900/40 rounded-xl shadow-sm bg-white placeholder-slate-500 focus:ring-2 focus:ring-green-700 focus:border-green-700 outline-none"
+      />
+
+      <input
+        [(ngModel)]="usuario.repetir"
+        name="repetir"
+        type="password"
+        placeholder="Repetir Password"
+        class="w-full px-4 py-2 border border-green-900/40 rounded-xl shadow-sm bg-white placeholder-slate-500 focus:ring-2 focus:ring-green-700 focus:border-green-700 outline-none"
+      />
+    </form>
+
+    <!-- Botones -->
+    <div class="flex justify-end gap-4 mt-8">
+      <button
+        (click)="guardar.emit()"
+        class="bg-green-900 hover:bg-green-800 text-white px-6 py-2.5 rounded-full font-semibold shadow-md transition-transform duration-150 hover:-translate-y-[1px]"
+      >
+        {{ modoEdicion ? "Modificar" : "Guardar" }}
+      </button>
+
+      <button
+        (click)="cerrar.emit()"
+        class="bg-white border border-green-900 text-green-900 px-6 py-2.5 rounded-full font-semibold hover:bg-blue-100 shadow-sm transition"
+      >
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>

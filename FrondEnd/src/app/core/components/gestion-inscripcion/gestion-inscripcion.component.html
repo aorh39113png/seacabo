@@ -1,0 +1,136 @@
+<div
+  class="bg-blue-50 text-slate-800 py-12 px-8 rounded-3xl shadow-xl font-[Times_New_Roman]"
+>
+  <div class="max-w-7xl mx-auto">
+    <!-- TÍTULO -->
+    <h2 class="text-4xl font-extrabold text-blue-900 mb-12 tracking-tight">
+      Gestión Inscripción Materias - Alumnos
+    </h2>
+
+    <!-- FILTROS -->
+    <div
+      class="flex flex-col md:flex-row items-center gap-4 mb-10 flex-wrap bg-white border border-green-900/30 shadow-md rounded-2xl px-6 py-5"
+    >
+      <!-- Filtro texto -->
+      <input
+        type="text"
+        [(ngModel)]="filtro"
+        (keyup.enter)="onFiltroChange()"
+        placeholder="Filtrar por Materia o Alumno..."
+        class="flex-1 px-5 py-3 border border-green-900/40 rounded-full shadow-sm bg-blue-50 placeholder-slate-500 text-slate-800 focus:ring-2 focus:ring-green-700 focus:border-green-700 outline-none"
+      />
+
+      <!-- Select Nivel -->
+      <select
+        [(ngModel)]="filtroNivel"
+        (change)="onFiltroChange()"
+        class="px-5 py-3 min-w-[190px] border border-green-900/40 rounded-full shadow-sm bg-white text-slate-800 focus:ring-2 focus:ring-green-700 focus:border-green-700 outline-none"
+      >
+        <option [value]="0">Todos los Niveles</option>
+        <option *ngFor="let n of listaNivelesActivos" [value]="n.codn">
+          {{ n.nombre }}
+        </option>
+      </select>
+
+      <!-- Botones -->
+      <div class="flex gap-3">
+        <!-- Imprimir -->
+        <button
+          (click)="imprimirTabla()"
+          class="bg-white border border-green-900/40 text-green-900 font-semibold px-4 py-3 rounded-full shadow-md flex items-center gap-2 hover:bg-blue-100 transition"
+        >
+          <i class="fa-solid fa-print"></i>
+        </button>
+
+        <!-- Nueva inscripción -->
+        <button
+          (click)="abrirModalNuevo()"
+          class="bg-green-900 hover:bg-green-800 text-white font-semibold px-6 py-3 rounded-full shadow-md flex items-center gap-2 transition"
+        >
+          <i class="fa-solid fa-plus"></i>
+          <span class="hidden md:inline">Nueva Inscripción</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TABLA -->
+    <div
+      class="overflow-x-auto shadow-2xl rounded-2xl border border-green-900/30 bg-white"
+    >
+      <table id="tabla-inscripciones" class="w-full bg-white">
+        <thead class="bg-green-900 text-white text-sm uppercase tracking-wide">
+          <tr>
+            <th class="px-6 py-4 text-left">Nivel</th>
+            <th class="px-6 py-4 text-left">Materia</th>
+            <th class="px-6 py-4 text-left">Alumno</th>
+            <th class="px-6 py-4 text-left">Paralelo</th>
+            <th class="px-6 py-4 text-center">Observación</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            *ngFor="let p of inscripciones"
+            class="border-b border-slate-200 bg-white hover:bg-blue-100/60 transition"
+          >
+            <td class="px-6 py-4 font-semibold text-slate-900">
+              {{ p.materia.nivel.nombre }}
+            </td>
+
+            <td class="px-6 py-4 text-slate-800 font-medium">
+              {{ p.materia.nombre }}
+            </td>
+
+            <td class="px-6 py-4 text-slate-800 font-medium">
+              {{ p.alumno.ap }} {{ p.alumno.am }} {{ p.alumno.nombre }}
+            </td>
+
+            <td class="px-6 py-4 font-medium text-slate-900">
+              {{ p.paralelo.nombre }}
+            </td>
+
+            <td class="px-6 py-4 text-center text-slate-800 font-medium">—</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Paginación -->
+      <div
+        *ngIf="totalPaginas > 1"
+        class="flex justify-center items-center gap-3 mt-6 pb-6 text-sm"
+      >
+        <button
+          (click)="cambiarPagina(paginaActual - 1)"
+          [disabled]="paginaActual === 1"
+          class="px-4 py-2 bg-green-900 text-white rounded-full disabled:bg-slate-300 hover:bg-green-800 transition"
+        >
+          ‹
+        </button>
+
+        <span class="text-slate-700 font-medium">
+          Pág {{ paginaActual }} de {{ totalPaginas }}
+        </span>
+
+        <button
+          (click)="cambiarPagina(paginaActual + 1)"
+          [disabled]="paginaActual === totalPaginas"
+          class="px-4 py-2 bg-green-900 text-white rounded-full disabled:bg-slate-300 hover:bg-green-800 transition"
+        >
+          ›
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL -->
+    <app-modal-inscripcion
+      *ngIf="modalVisible"
+      [modoEdicion]="modoEdicion"
+      [gestion]="gestionActual"
+      [listaMapas]="listaMapasActivos"
+      [listaEstudiantes]="listaEstudiantesActivos"
+      [inscripcionData]="inscripcionSeleccionada"
+      (cerrar)="cerrarModal()"
+      (guardar)="guardarInscripcion($event)"
+    ></app-modal-inscripcion>
+  </div>
+</div>

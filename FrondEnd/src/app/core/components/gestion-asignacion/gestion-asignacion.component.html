@@ -1,0 +1,209 @@
+<div
+  class="bg-blue-50 text-slate-800 py-12 px-6 rounded-3xl shadow-lg font-[Times_New_Roman]"
+>
+  <div class="max-w-7xl mx-auto">
+    <!-- TÍTULO PRINCIPAL -->
+    <h2
+      class="text-3xl md:text-4xl font-extrabold text-blue-900 mb-8 tracking-tight"
+    >
+      Asignación Procesos a Menú
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Lista de Menús -->
+      <div
+        class="bg-white p-6 rounded-2xl shadow-md border border-green-900/30"
+      >
+        <h3 class="text-2xl font-bold text-blue-900 mb-4">Lista de Menús</h3>
+
+        <input
+          type="text"
+          [(ngModel)]="menuFiltro"
+          (keyup.enter)="cargarMenus()"
+          placeholder="Filtrar Menús..."
+          class="w-full px-4 py-2 mb-4 border border-green-900/40 rounded-xl shadow-sm focus:ring-2 focus:ring-green-700 focus:border-green-700 outline-none bg-blue-50"
+        />
+
+        <div class="overflow-y-auto h-96 rounded-xl border border-green-900/30">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-green-900 text-white text-sm">
+                <th class="p-2 w-12 text-center"></th>
+                <th class="p-2 text-left">Lista de Menús</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let menu of menus"
+                class="border-b border-slate-200 hover:bg-blue-100/60 transition"
+              >
+                <td class="p-3 text-center">
+                  <input
+                    type="radio"
+                    name="menuSeleccionado"
+                    [value]="menu.codm"
+                    [(ngModel)]="menuSeleccionadoCodm"
+                    (change)="onMenuSelected()"
+                    class="accent-green-900 h-5 w-5 cursor-pointer"
+                  />
+                </td>
+                <td class="p-3 font-medium text-slate-900">
+                  {{ menu.nombre }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginación Menú -->
+        <div
+          class="flex justify-center items-center gap-3 mt-4 text-sm"
+          *ngIf="totalPaginasMenu > 1"
+        >
+          <button
+            (click)="cambiarPaginaMenu(paginaActualMenu - 1)"
+            [disabled]="paginaActualMenu === 1"
+            class="px-3 py-1 bg-green-900 text-white rounded-lg disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-green-800 transition"
+          >
+            ‹
+          </button>
+
+          <span class="text-slate-700">
+            Pág {{ paginaActualMenu }} de {{ totalPaginasMenu }}
+          </span>
+
+          <button
+            (click)="cambiarPaginaMenu(paginaActualMenu + 1)"
+            [disabled]="paginaActualMenu === totalPaginasMenu"
+            class="px-3 py-1 bg-green-900 text-white rounded-lg disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-green-800 transition"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+
+      <!-- Lista de Procesos -->
+      <div
+        class="bg-white p-6 rounded-2xl shadow-md border border-green-900/30"
+      >
+        <h3 class="text-2xl font-bold text-blue-900 mb-4">Lista de Procesos</h3>
+
+        <div class="flex flex-col gap-3 mb-4">
+          <!-- Filtro de Procesos -->
+          <input
+            type="text"
+            [(ngModel)]="procesoFiltro"
+            (keyup.enter)="cargarProcesos()"
+            placeholder="Filtrar Procesos..."
+            class="flex-1 px-4 py-2 border border-green-900/40 rounded-xl shadow-sm focus:ring-2 focus:ring-green-700 focus:border-green-700 outline-none bg-blue-50 disabled:bg-slate-100 disabled:text-slate-400"
+            [disabled]="!menuSeleccionadoCodm"
+          />
+
+          <!-- Opciones de filtro asignados -->
+          <div class="flex flex-wrap gap-4 items-center text-sm text-slate-700">
+            <label class="flex items-center gap-1">
+              <input
+                type="radio"
+                value="TODOS"
+                [(ngModel)]="filtroAsignado"
+                (change)="onFiltroAsignadoChange()"
+                name="filtroAsignado"
+                class="accent-green-900 cursor-pointer"
+                [disabled]="!menuSeleccionadoCodm"
+              />
+              <span>Todos</span>
+            </label>
+
+            <label class="flex items-center gap-1">
+              <input
+                type="radio"
+                value="SI"
+                [(ngModel)]="filtroAsignado"
+                (change)="onFiltroAsignadoChange()"
+                name="filtroAsignado"
+                class="accent-green-900 cursor-pointer"
+                [disabled]="!menuSeleccionadoCodm"
+              />
+              <span>Asignados</span>
+            </label>
+
+            <label class="flex items-center gap-1">
+              <input
+                type="radio"
+                value="NO"
+                [(ngModel)]="filtroAsignado"
+                (change)="onFiltroAsignadoChange()"
+                name="filtroAsignado"
+                class="accent-green-900 cursor-pointer"
+                [disabled]="!menuSeleccionadoCodm"
+              />
+              <span>No Asignados</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Tabla de Procesos -->
+        <div class="overflow-y-auto h-96 rounded-xl border border-green-900/30">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-green-900 text-white text-sm">
+                <th class="p-2 w-12 text-center"></th>
+                <th class="p-2 text-left">Lista de Procesos</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="!menuSeleccionadoCodm">
+                <td colspan="2" class="p-6 text-center text-slate-500 text-sm">
+                  Seleccione un Menú de la izquierda para ver los procesos.
+                </td>
+              </tr>
+
+              <tr
+                *ngFor="let proceso of procesos"
+                class="border-b border-slate-200 hover:bg-blue-100/60 transition"
+              >
+                <td class="p-3 text-center">
+                  <input
+                    type="checkbox"
+                    [checked]="proceso.asignado"
+                    (change)="onProcesoToggle(proceso, $event)"
+                    class="accent-green-900 h-5 w-5 cursor-pointer"
+                  />
+                </td>
+                <td class="p-3 font-medium text-slate-900">
+                  {{ proceso.nombre }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginación Procesos -->
+        <div
+          class="flex justify-center items-center gap-3 mt-4 text-sm"
+          *ngIf="totalPaginasProceso > 1"
+        >
+          <button
+            (click)="cambiarPaginaProceso(paginaActualProceso - 1)"
+            [disabled]="paginaActualProceso === 1"
+            class="px-3 py-1 bg-green-900 text-white rounded-lg disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-green-800 transition"
+          >
+            ‹
+          </button>
+
+          <span class="text-slate-700">
+            Pág {{ paginaActualProceso }} de {{ totalPaginasProceso }}
+          </span>
+
+          <button
+            (click)="cambiarPaginaProceso(paginaActualProceso + 1)"
+            [disabled]="paginaActualProceso === totalPaginasProceso"
+            class="px-3 py-1 bg-green-900 text-white rounded-lg disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-green-800 transition"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,441 @@
+<div
+  class="bg-blue-50 text-slate-800 py-12 px-8 rounded-3xl shadow-xl font-[Times_New_Roman]"
+>
+  <div class="max-w-7xl mx-auto">
+    <!-- TÍTULO -->
+    <h2 class="text-4xl font-extrabold text-blue-900 mb-12 tracking-tight">
+      Gestión Materias
+    </h2>
+
+    <!-- FILTROS -->
+    <div
+      class="flex flex-col md:flex-row items-center gap-4 mb-10 flex-wrap bg-white border border-green-900/30 shadow-md rounded-2xl px-6 py-5"
+    >
+      <!-- Filtro texto -->
+      <input
+        type="text"
+        [(ngModel)]="filtro"
+        (keyup.enter)="onFiltroChange()"
+        placeholder="Filtrar por nombre de Materia..."
+        class="flex-1 px-5 py-3 border border-green-900/40 rounded-full shadow-sm bg-blue-50 placeholder-slate-500 text-slate-800 focus:ring-2 focus:ring-green-700 focus:border-green-700 outline-none"
+      />
+
+      <!-- Estado -->
+      <div class="flex gap-6 items-center text-sm text-slate-800">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="estadoFiltro"
+            value="TODOS"
+            [(ngModel)]="filtroEstado"
+            (change)="onEstadoChange()"
+            class="accent-green-900"
+          />
+          <span class="font-medium">Todos</span>
+        </label>
+
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="estadoFiltro"
+            value="ACTIVOS"
+            [(ngModel)]="filtroEstado"
+            (change)="onEstadoChange()"
+            class="accent-green-900"
+          />
+          <span class="font-medium">Activos</span>
+        </label>
+
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="estadoFiltro"
+            value="BAJAS"
+            [(ngModel)]="filtroEstado"
+            (change)="onEstadoChange()"
+            class="accent-green-900"
+          />
+          <span class="font-medium">Bajas</span>
+        </label>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex gap-3">
+        <button
+          (click)="imprimirTabla()"
+          class="bg-white border border-green-900/40 text-green-900 font-semibold px-4 py-3 rounded-full shadow-md flex items-center gap-2 hover:bg-blue-100 transition"
+        >
+          <i class="fa-solid fa-print"></i>
+        </button>
+
+        <button
+          (click)="abrirModalNuevo()"
+          class="bg-green-900 hover:bg-green-800 text-white font-semibold px-6 py-3 rounded-full shadow-md flex items-center gap-2 transition"
+        >
+          <i class="fa-solid fa-plus"></i>
+          <span class="hidden md:inline">Nueva Materia</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TABLA PRINCIPAL -->
+    <div
+      class="overflow-x-auto shadow-2xl rounded-2xl border border-green-900/30 bg-white"
+    >
+      <table id="tabla-materias" class="w-full bg-white">
+        <thead class="bg-green-900 text-white text-sm uppercase tracking-wide">
+          <tr>
+            <th class="px-6 py-4 text-left">Sigla</th>
+            <th class="px-6 py-4 text-left">Nombre Materia</th>
+            <th class="px-6 py-4 text-left">Nivel</th>
+            <th class="px-6 py-4 text-center">Paralelo</th>
+            <th class="px-6 py-4 text-center">Items</th>
+            <th class="px-6 py-4 text-center">Estado</th>
+            <th class="px-6 py-4 text-center">Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            *ngFor="let m of materias"
+            class="bg-white border-b border-slate-200 hover:bg-blue-100/60 transition"
+          >
+            <td class="px-6 py-4 font-semibold text-slate-900">
+              {{ m.codmat }}
+            </td>
+
+            <td class="px-6 py-4 text-slate-800 font-medium">
+              {{ m.nombre }}
+            </td>
+
+            <td class="px-6 py-4 text-slate-900 font-medium">
+              {{ m.nivel.nombre }}
+            </td>
+
+            <td class="px-6 py-4 text-center">
+              <input
+                type="radio"
+                name="materiaParalelo"
+                [checked]="
+                  materiaSeleccionadaParaParalelos?.codmat === m.codmat
+                "
+                (change)="abrirPanelParalelos(m)"
+                class="accent-green-900 h-5 w-5 cursor-pointer"
+              />
+            </td>
+
+            <td class="px-6 py-4 text-center">
+              <input
+                type="radio"
+                name="materiaItem"
+                [checked]="materiaSeleccionadaParaItems?.codmat === m.codmat"
+                (change)="abrirPanelItems(m)"
+                class="accent-amber-500 h-5 w-5 cursor-pointer"
+              />
+            </td>
+
+            <td class="px-6 py-4 text-center">
+              <i
+                *ngIf="m.estado === 1"
+                class="fa-solid fa-thumbs-up text-emerald-600"
+              ></i>
+              <i
+                *ngIf="m.estado === 0"
+                class="fa-solid fa-thumbs-down text-red-600"
+              ></i>
+            </td>
+
+            <td class="px-6 py-4 flex justify-center gap-3">
+              <button
+                *ngIf="m.estado === 0"
+                (click)="confirmarHabilitar(m)"
+                title="Habilitar"
+                class="p-2 rounded-full bg-green-900 hover:bg-green-800 text-white shadow-md transition"
+              >
+                <i class="fa-solid fa-rotate-right"></i>
+              </button>
+
+              <button
+                *ngIf="m.estado === 1"
+                (click)="confirmarEliminar(m)"
+                title="Dar baja"
+                class="p-2 rounded-full bg-red-600 hover:bg-red-500 text-white shadow-md transition"
+              >
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+
+              <button
+                (click)="abrirModalEditar(m)"
+                title="Editar"
+                class="p-2 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-900 shadow-md transition"
+              >
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- PAGINACIÓN -->
+      <div
+        *ngIf="totalPaginas > 1"
+        class="flex justify-center items-center gap-4 mt-6 pb-6 text-sm"
+      >
+        <button
+          (click)="cambiarPagina(paginaActual - 1)"
+          [disabled]="paginaActual === 1"
+          class="px-4 py-2 rounded-full bg-green-900 text-white disabled:bg-slate-300 hover:bg-green-800 transition"
+        >
+          ‹
+        </button>
+
+        <ng-container
+          *ngFor="let p of [].constructor(totalPaginas); let i = index"
+        >
+          <button
+            (click)="cambiarPagina(i + 1)"
+            [class.bg-green-900]="paginaActual === i + 1"
+            [class.text-white]="paginaActual === i + 1"
+            class="px-4 py-2 rounded-full bg-blue-100 text-slate-900 hover:bg-blue-200 transition font-semibold"
+          >
+            {{ i + 1 }}
+          </button>
+        </ng-container>
+
+        <button
+          (click)="cambiarPagina(paginaActual + 1)"
+          [disabled]="paginaActual === totalPaginas"
+          class="px-4 py-2 rounded-full bg-green-900 text-white disabled:bg-slate-300 hover:bg-green-800 transition"
+        >
+          ›
+        </button>
+      </div>
+    </div>
+
+    <!-- PANEL GESTIÓN PARALELOS -->
+    <div
+      *ngIf="materiaSeleccionadaParaParalelos"
+      class="mt-10 p-6 bg-white border border-green-900/30 shadow-lg rounded-2xl"
+    >
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-2xl font-bold text-blue-900">
+          Gestión Paralelos —
+          <span class="text-slate-600">{{
+            materiaSeleccionadaParaParalelos.nombre
+          }}</span>
+          <span class="text-slate-400">(Gestión: {{ gestionActual }})</span>
+        </h3>
+
+        <button
+          (click)="cerrarPanelParalelos()"
+          class="text-slate-400 hover:text-red-500 transition"
+        >
+          <i class="fa-solid fa-xmark fa-2x"></i>
+        </button>
+      </div>
+
+      <div class="flex gap-4 mb-6 pb-4 border-b border-slate-200 flex-wrap">
+        <select
+          [(ngModel)]="paraleloParaAnadir"
+          class="px-4 py-3 border border-green-900/40 rounded-full shadow-sm focus:ring-2 focus:ring-green-700 outline-none"
+        >
+          <option disabled value="0">Seleccione un paralelo</option>
+          <option *ngFor="let p of listaParalelosActivos" [value]="p.codpar">
+            {{ p.nombre }}
+          </option>
+        </select>
+
+        <button
+          (click)="anadirParalelo()"
+          [disabled]="paraleloParaAnadir === 0"
+          class="px-5 py-3 rounded-full bg-green-900 text-white shadow-md hover:bg-green-800 transition disabled:bg-slate-400"
+        >
+          <i class="fa-solid fa-plus"></i> Añadir
+        </button>
+      </div>
+
+      <h4 class="text-lg font-semibold text-blue-900 mb-2">
+        Paralelos asignados
+      </h4>
+
+      <div
+        class="overflow-y-auto max-h-64 border border-green-900/30 rounded-xl shadow-inner"
+      >
+        <table class="w-full bg-white">
+          <thead class="bg-blue-100 text-slate-700 text-sm uppercase">
+            <tr>
+              <th class="p-3 text-left">Paralelo</th>
+              <th class="p-3 text-left">Gestión</th>
+              <th class="p-3 text-center">Estado</th>
+              <th class="p-3 text-center">Eliminar</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngIf="paralelosAsignados.length === 0">
+              <td colspan="4" class="p-4 text-center text-slate-500 bg-blue-50">
+                No existen paralelos asignados para esta gestión.
+              </td>
+            </tr>
+
+            <tr
+              *ngFor="let mapa of paralelosAsignados"
+              class="border-b border-slate-200 hover:bg-blue-100/60 transition"
+            >
+              <td class="p-3 font-medium text-slate-900">
+                {{ mapa.paralelo.nombre }}
+              </td>
+              <td class="p-3 text-slate-700">{{ mapa.id.gestion }}</td>
+
+              <td class="p-3 text-center">
+                <i
+                  *ngIf="mapa.estado === 1"
+                  class="fa-solid fa-thumbs-up text-emerald-600"
+                ></i>
+                <i
+                  *ngIf="mapa.estado === 0"
+                  class="fa-solid fa-thumbs-down text-red-600"
+                ></i>
+              </td>
+
+              <td class="p-3 text-center">
+                <button
+                  (click)="confirmarEliminarParalelo(mapa)"
+                  class="p-2 rounded-full bg-red-100 hover:bg-red-200 text-red-600 shadow-sm transition"
+                >
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PANEL GESTIÓN ITEMS -->
+    <div
+      *ngIf="materiaSeleccionadaParaItems"
+      class="mt-10 p-6 bg-white border border-green-900/30 shadow-lg rounded-2xl"
+    >
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-2xl font-bold text-blue-900">
+          Gestión Items —
+          <span class="text-slate-600">{{
+            materiaSeleccionadaParaItems.nombre
+          }}</span>
+          <span class="text-slate-400">(Gestión: {{ gestionActual }})</span>
+        </h3>
+
+        <button
+          (click)="cerrarPanelItems()"
+          class="text-slate-400 hover:text-red-500 transition"
+        >
+          <i class="fa-solid fa-xmark fa-2x"></i>
+        </button>
+      </div>
+
+      <div
+        class="flex gap-4 mb-6 pb-4 border-b border-slate-200 flex-wrap items-end"
+      >
+        <select
+          [(ngModel)]="itemParaAnadir"
+          class="px-4 py-3 border border-green-900/40 rounded-full shadow-sm focus:ring-2 focus:ring-green-700 outline-none"
+        >
+          <option disabled value="0">Seleccione un ítem</option>
+          <option *ngFor="let i of listaItemsActivos" [value]="i.codi">
+            {{ i.nombre }}
+          </option>
+        </select>
+
+        <input
+          type="number"
+          [(ngModel)]="ponderacionParaAnadir"
+          placeholder="Ponderación"
+          class="px-4 py-3 border border-green-900/40 rounded-full shadow-sm focus:ring-2 focus:ring-green-700 outline-none w-36"
+        />
+
+        <button
+          (click)="anadirItem()"
+          [disabled]="itemParaAnadir === 0"
+          class="px-5 py-3 rounded-full bg-green-900 text-white shadow-md hover:bg-green-800 transition disabled:bg-slate-400"
+        >
+          <i class="fa-solid fa-plus"></i> Añadir Ítem
+        </button>
+      </div>
+
+      <h4 class="text-lg font-semibold text-blue-900 mb-2">Ítems asignados</h4>
+
+      <div
+        class="overflow-y-auto max-h-64 border border-green-900/30 rounded-xl shadow-inner"
+      >
+        <table class="w-full bg-white">
+          <thead class="bg-blue-100 text-slate-700 text-sm uppercase">
+            <tr>
+              <th class="p-3 text-left">Ítem</th>
+              <th class="p-3 text-left">Ponderación</th>
+              <th class="p-3 text-center">Estado</th>
+              <th class="p-3 text-center">Eliminar</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngIf="itemsAsignados.length === 0">
+              <td colspan="4" class="p-4 text-center text-slate-500 bg-blue-50">
+                No existen ítems asignados.
+              </td>
+            </tr>
+
+            <tr
+              *ngFor="let itemat of itemsAsignados"
+              class="border-b border-slate-200 hover:bg-blue-100/60 transition"
+            >
+              <td class="p-3 font-medium text-slate-900">
+                {{ itemat.item.nombre }}
+              </td>
+              <td class="p-3 text-slate-700">{{ itemat.ponderacion }}</td>
+
+              <td class="p-3 text-center">
+                <i
+                  *ngIf="itemat.estado === 1"
+                  class="fa-solid fa-thumbs-up text-emerald-600"
+                ></i>
+                <i
+                  *ngIf="itemat.estado === 0"
+                  class="fa-solid fa-thumbs-down text-red-600"
+                ></i>
+              </td>
+
+              <td class="p-3 text-center">
+                <button
+                  (click)="confirmarEliminarItem(itemat)"
+                  class="p-2 rounded-full bg-red-100 hover:bg-red-200 text-red-600 shadow-sm transition"
+                >
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MODALES -->
+    <app-modal-materia
+      *ngIf="modalMateriaVisible"
+      [modoEdicion]="modoEdicion"
+      [materiaData]="materiaSeleccionada!"
+      [niveles]="listaNivelesActivos"
+      (cerrar)="cerrarModalMateria()"
+      (guardar)="
+        modoEdicion ? modificarMateria($event) : guardarMateria($event)
+      "
+    ></app-modal-materia>
+
+    <app-modal-confirmacion
+      *ngIf="modalConfirmVisible"
+      [mensaje]="mensajeConfirmacion"
+      (cerrar)="cerrarModalConfirmacion()"
+      (aceptar)="ejecutarConfirmacion()"
+    ></app-modal-confirmacion>
+  </div>
+</div>

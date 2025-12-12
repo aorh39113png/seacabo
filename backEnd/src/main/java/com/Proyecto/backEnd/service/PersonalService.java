@@ -1,0 +1,237 @@
+package com.Proyecto.backEnd.service;
+
+import com.Proyecto.backEnd.exception.DuplicateResourceException;
+
+import com.Proyecto.backEnd.model.DatosModel;
+import com.Proyecto.backEnd.model.PersonalModel;
+import com.Proyecto.backEnd.repository.DatosRepo;
+import com.Proyecto.backEnd.repository.PersonalRepo;
+import com.Proyecto.backEnd.repository.UsuariosRepo;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.List;
+
+@Service
+public class PersonalService {
+
+    @Autowired
+    private PersonalRepo personalRepo;
+    @Autowired
+    private UsuariosRepo usuariosRepo;
+    @Autowired
+    private DatosRepo datosRepo;
+    @Value("${upload.dir}")
+    private String uploadDir;
+
+    public boolean tieneUsuario(int codp) {
+        return usuariosRepo.existsByPersonalCodp(codp);
+    }
+
+    // Listar
+    public List<PersonalModel> listarTodo() {
+        List<PersonalModel> lista = personalRepo.findAll();
+        lista.forEach(p -> {
+            p.setFoto(normalizarFoto(p.getFoto()));
+            datosRepo.findById(p.getCodp())
+                    .ifPresent(datos -> p.setCedula(datos.getCedula()));
+        });
+        return lista;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public PersonalModel crear(PersonalModel personal, MultipartFile foto) throws IOException {
+        personal.setEstado(1);
+        System.out.println("🧩 Guardando persona: " + personal.getNombre());
+
+        String cedulaNormalizada = validarCedulaObligatoriaYUnica(personal.getCedula(), null);
+
+        if (foto != null && !foto.isEmpty()) {
+            String nombreFoto = guardarFoto(foto);
+            personal.setFoto(nombreFoto);
+        } else {
+            System.out.println("⚠️ Persona sin foto, se usará la imagen por defecto.");
+            personal.setFoto("default-user.jpg");
+        }
+
+        PersonalModel guardado = personalRepo.save(personal);
+        System.out.println("💾 Persona guardada con ID: " + guardado.getCodp());
+        // Registrar la cédula asociada si viene en la petición
+        DatosModel datosPersona = new DatosModel();
+        datosPersona.setCodp(guardado.getCodp());
+        datosPersona.setCedula(cedulaNormalizada);
+        datosPersona.setPersonal(guardado);
+
+        try {
+            datosRepo.save(datosPersona);
+        } catch (DataIntegrityViolationException ex) {
+            throw new DuplicateResourceException("Ya existe una persona registrada con esa cédula", ex);
+        }
+        guardado.setCedula(cedulaNormalizada);
+
+        guardado.setFoto(normalizarFoto(guardado.getFoto()));
+        return guardado;
+    }
+
+    // Modificar
+    @Transactional(rollbackFor = Exception.class)
+    public PersonalModel modificar(int codp, PersonalModel datos, MultipartFile nuevaFoto) throws IOException {
+        PersonalModel p = personalRepo.findById(codp)
+                .orElseThrow(() -> new RuntimeException("Persona no encontrada"));
+
+        p.setNombre(datos.getNombre());
+        p.setAp(datos.getAp());
+        p.setAm(datos.getAm());
+        p.setGenero(datos.getGenero());
+        p.setTipo(datos.getTipo());
+        p.setDirec(datos.getDirec());
+        p.setTelf(datos.getTelf());
+        p.setEcivil(datos.getEcivil());
+        p.setFnac(datos.getFnac());
+
+        String nuevaCedula = validarCedulaObligatoriaYUnica(datos.getCedula(), codp);
+
+        DatosModel datosPersona = datosRepo.findById(codp).orElseGet(() -> {
+            DatosModel nuevoDato = new DatosModel();
+            nuevoDato.setCodp(codp);
+            nuevoDato.setPersonal(p);
+            return nuevoDato;
+        });
+
+        datosPersona.setCodp(codp);
+        datosPersona.setCedula(nuevaCedula);
+        datosPersona.setPersonal(p);
+
+        try {
+            datosRepo.save(datosPersona);
+        } catch (DataIntegrityViolationException ex) {
+            throw new DuplicateResourceException("Ya existe una persona registrada con esa cédula", ex);
+        }
+
+        // Lógica para foto
+        if (datos.getFoto() != null && datos.getFoto().equals("DEFAULT")) {
+            // Si el frontend manda "DEFAULT", forzamos la imagen por defecto
+            System.out.println("🔄 Reseteando foto a default.");
+            p.setFoto("default-user.png");
+        } else if (nuevaFoto != null && !nuevaFoto.isEmpty()) {
+            // Si viene un archivo nuevo, lo guardamos
+            String nombreArchivo = guardarFoto(nuevaFoto);
+            p.setFoto(nombreArchivo);
+        }
+
+        p.setFoto(normalizarFoto(p.getFoto()));
+
+        return personalRepo.save(p);
+    }
+
+    // Eliminar lógico
+    public void eliminarLogico(int codp) {
+        PersonalModel p = personalRepo.findById(codp)
+                .orElseThrow(() -> new RuntimeException("Persona no encontrada"));
+        p.setEstado(0);
+        personalRepo.save(p);
+    }
+
+    public List<PersonalModel> listarProfesoresActivos() {
+        Specification<PersonalModel> spec = (root, query, cb) -> {
+            Predicate p1 = cb.equal(root.get("estado"), 1); // Activos
+            Predicate p2 = cb.equal(root.get("tipo"), "P"); // Tipo 'P' (Profesor)
+            return cb.and(p1, p2);
+        };
+        List<PersonalModel> profesores = personalRepo.findAll(spec, Sort.by(Sort.Direction.ASC, "ap"));
+        profesores.forEach(p -> p.setFoto(normalizarFoto(p.getFoto())));
+        return profesores;
+    }
+
+    // Habilitar
+    public void habilitar(int codp) {
+        PersonalModel p = personalRepo.findById(codp)
+                .orElseThrow(() -> new RuntimeException("Persona no encontrada"));
+        p.setEstado(1);
+        personalRepo.save(p);
+    }
+
+    private String guardarFoto(MultipartFile archivo) throws IOException {
+        if (archivo == null || archivo.isEmpty()) {
+            System.out.println("⚠️ No se recibió ningún archivo para guardar.");
+            return null;
+        }
+
+        // EVITAR DUPLICAR LA FOTO POR DEFECTO
+        // Si el archivo se llama igual que la default, retornamos el nombre fijo y NO
+        // guardamos nada.
+        if ("default-user.png".equals(archivo.getOriginalFilename())) {
+            System.out.println("⚠️ Se intentó subir la foto default. Usando la existente.");
+            return "default-user.png";
+        }
+
+        // ✅ Ruta absoluta dentro del backend
+        Path directorio = Paths.get("src/uploads/fotos").toAbsolutePath().normalize();
+
+        // Crea carpeta si no existe
+        if (!Files.exists(directorio)) {
+            Files.createDirectories(directorio);
+            System.out.println("📁 Carpeta creada: " + directorio);
+        }
+
+        // Nombre único
+        String nombreArchivo = System.currentTimeMillis() + "_" + archivo.getOriginalFilename();
+        Path destino = directorio.resolve(nombreArchivo);
+
+        // Guarda físicamente
+        Files.copy(archivo.getInputStream(), destino, StandardCopyOption.REPLACE_EXISTING);
+
+        System.out.println("✅ Archivo guardado: " + nombreArchivo);
+        System.out.println("📂 Ruta absoluta: " + destino.toAbsolutePath());
+
+        return nombreArchivo;
+    }
+
+    private String normalizarFoto(String foto) {
+        if (foto == null || foto.trim().isEmpty() ||
+                "null".equalsIgnoreCase(foto) ||
+                "undefined".equalsIgnoreCase(foto) ||
+                "default".equalsIgnoreCase(foto) ||
+                "default-user".equalsIgnoreCase(foto)) {
+            return "default-user.png";
+        }
+        return foto;
+    }
+
+    private String validarCedulaObligatoriaYUnica(String cedula, Integer codpActual) {
+        if (cedula == null || cedula.trim().isEmpty()) {
+            throw new IllegalArgumentException("La cédula es obligatoria");
+        }
+
+        String cedulaNormalizada = cedula.trim();
+
+        datosRepo.findByCedula(cedulaNormalizada)
+                .filter(existente -> codpActual == null || !existente.getCodp().equals(codpActual))
+                .ifPresent(existente -> {
+                    throw new DuplicateResourceException("Ya existe una persona registrada con esa cédula");
+                });
+
+        return cedulaNormalizada;
+    }
+
+    public List<PersonalModel> listarEstudiantesActivos() {
+        Specification<PersonalModel> spec = (root, query, cb) -> {
+            Predicate p1 = cb.equal(root.get("estado"), 1); // Activos
+            // Corregido: 'E' como String
+            Predicate p2 = cb.equal(root.get("tipo"), "E"); // Tipo 'E' (Estudiante)
+            return cb.and(p1, p2);
+        };
+        List<PersonalModel> estudiantes = personalRepo.findAll(spec, Sort.by(Sort.Direction.ASC, "ap"));
+        estudiantes.forEach(p -> p.setFoto(normalizarFoto(p.getFoto())));
+        return estudiantes;
+    }
+}
